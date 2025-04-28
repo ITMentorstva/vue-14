@@ -5,6 +5,7 @@ import App from './App.vue'
 import { defineRule } from "vee-validate";
 import { required, min, max } from "@vee-validate/rules";
 import { createPinia } from "pinia";
+import './registerServiceWorker'
 
 defineRule('required', required);
 defineRule('min', min);
