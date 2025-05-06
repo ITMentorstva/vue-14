@@ -56,7 +56,7 @@ export default defineComponent({
     },
 
     beforeMount() {
-      this.tasks = getAllTasks() ?? [];
+      this.tasks = this.taskStore.tasks;
     },
 
     computed: {
