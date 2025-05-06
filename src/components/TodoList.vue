@@ -4,9 +4,9 @@
       @close-create-task="closeCreateTaskPopup"
       v-if="showCreatePopup"
   ></CreateTask>
+
   <SortTask
-    :prioritySort="prioritySort"
-    @update:priority-sort="prioritySort = $event"
+    v-model:prioritySort="taskStore.prioritySort"
     @change-sort="changeSort"
   ></SortTask>
 
@@ -17,104 +17,44 @@
 
 </template>
 
+<script setup lang="ts">
 
-<script lang="ts">
+  import CreateTask from "@/components/tasks/createTask.vue";
+  import SortTask from "@/components/tasks/sortTask.vue";
+  import AllTasks from "@/components/tasks/allTasks.vue";
+  import {useTaskStore} from "@/stores/useTaskStore";
+  import {onMounted, ref, watch} from "vue";
+  import TaskType from "@/Types/TaskType";
 
+  const taskStore = useTaskStore();
+  const showCreatePopup = ref(false);
 
-import { defineComponent } from "vue";
-import {generateRandomId, getAllTasks, updateAllTasks } from "@/models/tasksModel";
-import TaskType from "@/Types/TaskType";
-import { BoardType } from "@/Types/boards/BoardType";
-import CreateTask from "@/components/tasks/createTask.vue";
-import SortTask from "@/components/tasks/sortTask.vue";
-import AllTasks from "@/components/tasks/allTasks.vue";
-import {prepareTask, sortTasks } from "@/services/taskService";
-import { useTaskStore } from "@/stores/useTaskStore";
-
-export default defineComponent({
-    name: "TodoList",
-    components: {
-      AllTasks,
-      SortTask,
-      CreateTask,
-    },
-
-    setup() {
-      const taskStore = useTaskStore();
-      return {
-        taskStore
-      };
-    },
-
-    data() {
-      return {
-        id: '',
-        tasks: [] as TaskType[],
-        prioritySort: '',
-        showCreatePopup: false,
-      }
-    },
-
-    beforeMount() {
-      this.tasks = this.taskStore.tasks;
-    },
-
-    computed: {
-
-      groupedTasks(): Record<BoardType, TaskType[]> {
-
-        const groups: Record<BoardType, TaskType[]> = {
-          todo: [],
-          doing: [],
-          done: [],
-        };
-
-        for(const task of this.tasks) {
-          groups[task.board].push(task);
-        }
-
-        return groups;
-      }
-    },
-
-    watch: {
-      tasks: {
-        handler(tasks: TaskType[]): void {
-          updateAllTasks(tasks);
-        },
-        deep: true
-      },
-    },
-
-    methods: {
-
-      openCreatePopup() {
-        this.showCreatePopup = true;
-      },
-
-      closeCreateTaskPopup() {
-          this.showCreatePopup = false;
-      },
-
-      changeSort() {
-        this.tasks = sortTasks(this.tasks, this.prioritySort);
-      },
-
-      addTask(newTask: TaskType) {
-
-        const taskExists = this.tasks.some(task => task.title === newTask.title.trim());
-
-        if(taskExists) {
-          alert("Zadatak sa ovim imenom vec postoji");
-          return;
-        }
-
-        const preparedTask = prepareTask(newTask, this.tasks);
-
-        this.tasks.push(preparedTask);
-
-      }
-    }
+  onMounted(() => {
+    taskStore.loadAllTasks()
   });
+
+  watch(
+      () => taskStore.tasks,
+      () => {
+        taskStore.saveTasks()
+      },
+      { deep: true }
+  )
+
+  function openCreatePopup() {
+    showCreatePopup.value = true;
+  }
+
+  function closeCreateTaskPopup() {
+    showCreatePopup.value = false;
+  }
+
+  function changeSort() {
+    taskStore.changeSort();
+  }
+
+  function addTask(newTask: TaskType) {
+    taskStore.addTask(newTask);
+  }
 
 </script>
